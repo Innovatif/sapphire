@@ -1432,7 +1432,7 @@ class SiteTree extends DataObject implements PermissionProvider,i18nEntityProvid
 			// The only way after a write() call to determine if it was triggered by a writeWithoutVersion(),
 			// which we have to pass on to the virtual page writes as well.
 			$previous = ($this->Version > 1) ? Versioned::get_version($this->class, $this->ID, $this->Version-1) : null;
-			$withoutVersion = (!$previous || $previous->Version == $this->Version);
+			$withoutVersion = $this->getExtensionInstance('Versioned')->_nextWriteWithoutVersion;
 			foreach($linkedPages as $page) {
 				$page->copyFrom($page->CopyContentFrom());
 				if($withoutVersion) $page->writeWithoutVersion();
@@ -1494,6 +1494,22 @@ class SiteTree extends DataObject implements PermissionProvider,i18nEntityProvid
 					'ALLOWED_CHILDREN'
 				);
 			}
+		}
+
+		// "Can be root" validation
+		if(!$this->stat('can_be_root') && !$this->ParentID) {
+			$result->error(
+				sprintf(
+					_t(
+						'SiteTree.PageTypNotAllowedOnRoot', 
+						'Page type "%s" is not allowed on the root level', 
+						PR_MEDIUM,
+						'First argument is a class name'
+					),
+					$this->i18n_singular_name()
+				),
+				'CAN_BE_ROOT'
+			);
 		}
 		
 		return $result;
@@ -1991,7 +2007,7 @@ class SiteTree extends DataObject implements PermissionProvider,i18nEntityProvid
 			return $actions;
 		}
 
-		if($this->isPublished() && $this->canPublish() && !$this->IsDeletedFromStage) {
+		if($this->isPublished() && $this->canDeleteFromLive() && !$this->IsDeletedFromStage) {
 			// "unpublish"
 			$unpublish = FormAction::create('unpublish', _t('SiteTree.BUTTONUNPUBLISH', 'Unpublish'), 'delete');
 			$unpublish->describe(_t('SiteTree.BUTTONUNPUBLISHDESC', 'Remove this page from the published site'));
