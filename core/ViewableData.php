@@ -180,8 +180,8 @@ class ViewableData extends Object implements IteratorAggregate {
 		
 		foreach($this->allMethodNames() as $method) {
 			if($method[0] == '_' && $method[1] != '_') {
-				$this->createMethod (
-					substr($method, 1), "return \$obj->cachedCall('$method', '" . substr($method, 1) . "', \$args);"
+				$this->createMethod(
+					substr($method, 1), "return \$obj->cachedCall('$method', \$args, '" . substr($method, 1) . "');"
 				);
 			}
 		}
@@ -822,7 +822,12 @@ class ViewableData_Customised extends ViewableData {
 		
 		return $this->original->obj($fieldName, $arguments, $forceReturnedObject, $cache, $cacheName);
 	}
-	
+
+	public function iteratorProperties($pos, $totalItems) {
+		parent::iteratorProperties($pos, $totalItems);
+
+		$this->customised->iteratorProperties($pos, $totalItems);
+	}
 }
 
 /**
